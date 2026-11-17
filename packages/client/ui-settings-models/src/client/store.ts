@@ -75,6 +75,14 @@ export function joinProviderDirectory(
       - (right.provider === 'deepseek-account' ? 0 : right.provider === 'deepseek-official' ? 1 : 2))
 }
 
+/**
+ * Why a directory entry has no editable surface on this page. The page names
+ * these instead of dropping the row silently: a provider the directory offers
+ * and the settings document cannot address is a fact about the two surfaces
+ * meeting, not an absent provider.
+ */
+export type UnrenderableReason = 'namespace-missing' | 'settings-path-missing'
+
 /** One provider row the page renders. */
 export interface ProviderRow {
   /** Account route has usable credentials for the configured inference origin. */
@@ -83,6 +91,12 @@ export interface ProviderRow {
   entry: ProviderDirectoryEntry
   /** Whether any layer configures this provider (its profile resolves). */
   configured: boolean
+  /**
+   * Why this row has no editable surface, so the page can report what it
+   * skipped rather than rendering a provider with nothing inside. Absent when
+   * the row renders.
+   */
+  unrenderable?: UnrenderableReason
   /** Whether the user layer alone carries the profile (removal restores the base). */
   removable: boolean
   /** The credential reference the resolved profile names, when one does. */
@@ -256,9 +270,17 @@ export class ModelsSettingsStore {
         && entry.settingsPath.length > 0
         && this.schema.hasPath(namespace.user, entry.settingsPath)
         && !this.schema.hasPath(namespace.base, entry.settingsPath)
+      // The two ways a declared row ends up with nothing to render: the
+      // namespace its route names never arrived with the settings document, or
+      // the namespace arrived but the path holds no value to edit yet. Both are
+      // named, so an empty page can say which one happened.
+      let unrenderable: UnrenderableReason | undefined
+      if (namespace === undefined) unrenderable = 'namespace-missing'
+      else if (entry.settingsPath.length > 0 && !configured) unrenderable = 'settings-path-missing'
       return {
         entry,
         configured,
+        ...(unrenderable === undefined ? {} : { unrenderable }),
         removable,
         apiKeyEnv: entry.provider === 'deepseek-account' ? undefined : apiKeyEnvOf(namespace, entry.settingsPath, this.schema),
         credential: undefined,

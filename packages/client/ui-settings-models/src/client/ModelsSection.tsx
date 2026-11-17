@@ -366,7 +366,10 @@ function Loaded({ injected, renderSlot }: { injected: ModelsSectionFace; renderS
   // step: whether the user already has a provider to talk to.
   const anyUsable = state.rows.some(providerUsable)
   const configured = state.rows.filter(row => row.configured)
-  const configurable = state.rows.filter(row => state.namespaces.has(row.entry.settingsNs))
+  // Rows the directory declared that the settings document cannot address. They
+  // stay in the snapshot rather than being dropped, so an empty page names what
+  // it skipped instead of reading as a load that never finished.
+  const skipped = state.rows.filter(row => row.unrenderable !== undefined)
   const addable: AddableRow[] = state.rows.flatMap((row) => {
     const namespace = state.namespaces.get(row.entry.settingsNs)
     return namespace === undefined || row.configured ? [] : [{ row, namespace }]
@@ -377,13 +380,17 @@ function Loaded({ injected, renderSlot }: { injected: ModelsSectionFace; renderS
   const piAi = state.namespaces.get('llm-pi-ai')
   const protocols = protocolChoices(piAi, schema)
   const reasoningLevels = reasoningLevelChoices(piAi, schema)
-  // Each mode is offered while its namespace is mounted and enabled while it
-  // has something to offer; the card shows the chosen mode where both are
-  // offered, else the only one there is. A mode's panel is mounted while it is
-  // the shown mode or has been shown since the card opened — derived, so a
-  // refresh that changes which modes are offered can never leave the card
-  // without a panel.
-  const catalogOffered = configurable.length > 0
+  // Each mode is offered while its surface exists and enabled while it has
+  // something to offer; the card shows the chosen mode where both are offered,
+  // else the only one there is. A mode's panel is mounted while it is the shown
+  // mode or has been shown since the card opened — derived, so a refresh that
+  // changes which modes are offered can never leave the card without a panel.
+  //
+  // The catalog mode is offered from the directory's own claim (it declared a
+  // settings route), not from that route's namespace being mounted: when the
+  // namespaces go missing the entry point is the only thing left to offer, and
+  // hiding it too would strand the user on an empty page.
+  const catalogOffered = state.rows.some(row => row.entry.settingsNs !== '')
   const catalogEnabled = addable.length > 0
   const customOffered = piAi !== undefined
   const customEnabled = protocols.length > 0
@@ -422,6 +429,39 @@ function Loaded({ injected, renderSlot }: { injected: ModelsSectionFace; renderS
             {providerCopy(t('savedProvider'), savedIdentity)}
           </p>
         )}
+      {state.status === 'ready' && configured.length === 0
+        ? (
+          // Loaded, and nothing to edit: the page says so and names the
+          // entries it skipped, instead of showing the same two lines it shows
+          // while the snapshot is still on its way.
+          <div className={styles['emptyState']}>
+            <p className={styles['emptyStateBody']}>{t('emptyDirectory')}</p>
+            <p className={styles['emptyStateCounts']}>
+              {`${t('directoryEntries')}: ${state.rows.length} · ${t('skippedEntries')}: ${skipped.length}`}
+            </p>
+            {skipped.length === 0
+              ? null
+              : (
+                <details className={styles['skipped']}>
+                  <summary className={styles['skippedSummary']}>
+                    {`${t('skipDetails')} (${skipped.length})`}
+                  </summary>
+                  <ul className={styles['skippedList']}>
+                    {skipped.map(row => (
+                      <li key={row.entry.provider} className={styles['skippedItem']}>
+                        <span className={styles['skippedName']}>{row.entry.displayName}</span>
+                        <span className={styles['skippedProvider']}>{row.entry.provider}</span>
+                        <span className={styles['skippedReason']}>
+                          {t(row.unrenderable === 'namespace-missing' ? 'skipNamespaceMissing' : 'skipSettingsPathMissing')}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+          </div>
+        )
+        : null}
       <ul className={styles['rows']}>
         {configured.map((row) => {
           const target = targetOf(row)

@@ -933,6 +933,7 @@ select.input {
 
 @media (prefers-reduced-motion: reduce) {
   .customizedSummary::before,
+  .skippedSummary::before,
   .switchThumb {
     transition: none;
   }
@@ -1000,4 +1001,105 @@ select.input {
   font-size: 13px;
   line-height: 20px;
   text-align: center;
+}
+/* Loaded, and nothing to edit: this stands where the provider rows would be.
+   Dashed like the add affordance it sits above, so it reads as a place the
+   rows have not arrived rather than as chrome around content. */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px dashed var(--dsw-alias-border-l3);
+  border-radius: var(--dsw-radius-lg);
+}
+
+.emptyStateBody,
+.emptyStateCounts {
+  margin: 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.emptyStateBody {
+  color: var(--dsw-alias-label-secondary);
+}
+
+/* Counts in the code face: they are diagnostic output, not prose. */
+.emptyStateCounts {
+  font-family: var(--ds-font-family-code);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.skipped {
+  border-top: 0.5px solid var(--dsw-alias-border-l2);
+  padding-top: 8px;
+}
+
+.skippedSummary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 2px 4px;
+  margin-left: -4px;
+  border-radius: var(--dsw-radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 500;
+  color: var(--dsw-alias-label-secondary);
+  list-style: none;
+}
+
+.skippedSummary::-webkit-details-marker {
+  display: none;
+}
+
+.skippedSummary::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-right: 1.5px solid currentcolor;
+  border-bottom: 1.5px solid currentcolor;
+  transform: rotate(-45deg) translate(-1px, -1px);
+  transition: transform 120ms ease;
+}
+
+.skipped[open] > .skippedSummary::before {
+  transform: rotate(45deg) translate(-1px, -1px);
+}
+
+.skippedList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.skippedItem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.skippedName {
+  color: var(--dsw-alias-label-secondary);
+  font-weight: 500;
+}
+
+.skippedProvider {
+  color: var(--dsw-alias-label-tertiary);
+  font-family: var(--ds-font-family-code);
+}
+
+.skippedReason {
+  color: var(--dsw-alias-label-tertiary);
 }

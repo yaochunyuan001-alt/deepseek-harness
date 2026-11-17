@@ -7,7 +7,7 @@ import Schema from '@deepseek-ai/schemastery'
 import { Context } from '@deepseek-ai/cordis'
 import { bindSnapshotSelector, RemoteError } from '@deepseek-ai/dsh-client-test-runtime'
 import type {
-  CredentialInfo, RemoteResult, SettingsNamespaceView,
+  CredentialInfo, LlmConfigurableProvider, LlmProviderInfo, RemoteResult, SettingsNamespaceView,
 } from '@deepseek-ai/dsh-api-remotes/client'
 import type { JsonValue } from '@deepseek-ai/dsh-util-values'
 import {
@@ -182,6 +182,12 @@ function scriptedFace(overrides: {
   mutate?: ReturnType<typeof vi.fn>
   set?: ReturnType<typeof vi.fn>
   unset?: ReturnType<typeof vi.fn>
+  /** Routes the Host registers; defaults to the fixture pair below. */
+  providers?: readonly LlmProviderInfo[]
+  /** Providers the directory declares; defaults to the fixture list below. */
+  directory?: readonly LlmConfigurableProvider[]
+  /** Namespace views the settings document answers with; defaults to {@link wireNamespaces}. */
+  namespaces?: SettingsNamespaceView[]
 } = {}) {
   const providerNamespace = wireNamespaces().find(view => view.ns === 'llm-pi-ai')!
   const update = overrides.update ?? vi.fn(() => Promise.resolve(remoteOk(providerNamespace)))
@@ -190,11 +196,10 @@ function scriptedFace(overrides: {
   const unset = overrides.unset ?? vi.fn(() => Promise.resolve(remoteOk(undefined)))
   const face = {
     llm: {
-      listProviders: vi.fn((): ReturnType<PageContext['remote']['llm']['listProviders']> => Promise.resolve(remoteOk([
-        { id: 'deepseek-official', name: 'DeepSeek' },
-        { id: 'openai', name: 'openai' },
-      ]))),
-      listConfigurableProviders: vi.fn(() => Promise.resolve(remoteOk([
+      listProviders: vi.fn((): ReturnType<PageContext['remote']['llm']['listProviders']> => Promise.resolve(remoteOk(
+        overrides.providers ?? [{ id: 'deepseek-official', name: 'DeepSeek' }, { id: 'openai', name: 'openai' }],
+      ))),
+      listConfigurableProviders: vi.fn(() => Promise.resolve(remoteOk(overrides.directory ?? [
         { provider: 'deepseek-official', displayName: 'DeepSeek', settingsNs: 'llm-deepseek', settingsPath: [], active: true },
         {
           provider: 'openai', displayName: 'openai', settingsNs: 'llm-pi-ai', settingsPath: ['providers', 'openai'], active: true,
@@ -212,7 +217,7 @@ function scriptedFace(overrides: {
       discoverModels: vi.fn(() => Promise.resolve(remoteOk([]))),
     },
     settings: {
-      describe: vi.fn(() => Promise.resolve(remoteOk({ writable: true, hasDocument: false, namespaces: wireNamespaces() }))),
+      describe: vi.fn(() => Promise.resolve(remoteOk({ writable: true, hasDocument: false, namespaces: overrides.namespaces ?? wireNamespaces() }))),
       update,
       mutate,
     },
@@ -601,11 +606,14 @@ describe('ModelsSection', () => {
     }
   })
 
-  it('hides the add action when no settings namespace can open an editor', async () => {
+  it('keeps the add action, disabled, when no settings namespace can open an editor', async () => {
     const scripted = scriptedFace()
     scripted.face.settings.describe.mockResolvedValue(remoteOk({ writable: true, hasDocument: false, namespaces: [] }))
     await mountFace(scripted)
-    expect(screen.queryByRole('button', { name: en.add })).toBeNull()
+    // The directory still declares routes, so the entry point stays on the
+    // page; with no namespace mounted there is nothing it could open yet.
+    expect(screen.getByRole<HTMLButtonElement>('button', { name: en.add }).disabled).toBe(true)
+    expect(screen.getByText(en.emptyDirectory)).toBeTruthy()
   })
 
   it('offers only providers whose settings namespace can open an editor', async () => {
@@ -2666,4 +2674,63 @@ it.each([es, fr, de, ru, pt])('keeps capacity examples in translated validation 
       expect(parseCapacity(token!)).toBeGreaterThan(0)
     }
   }
+})
+/** The fixture namespaces with the ones a scenario withholds. */
+function namespacesWithout(...withheld: string[]): SettingsNamespaceView[] {
+  return wireNamespaces().filter(view => !withheld.includes(view.ns))
+}
+
+// A directory that answers with rows no settings namespace can host: the page
+// has loaded, has nothing to edit, and has to say which of the two joins failed
+// instead of borrowing the two lines it shows while the snapshot is in flight.
+describe('ModelsSection over a directory without its settings namespaces', () => {
+  it('states the empty page and names every entry the join skipped', async () => {
+    await mountFace(scriptedFace({ namespaces: [] }))
+    expect(screen.getByRole('heading', { name: en.title })).toBeTruthy()
+    expect(screen.getByText(en.emptyDirectory)).toBeTruthy()
+    expect(screen.getByText(`${en.directoryEntries}: 6 · ${en.skippedEntries}: 6`)).toBeTruthy()
+    expect(screen.getByText(`${en.skipDetails} (6)`)).toBeTruthy()
+    expect(screen.getAllByText(en.skipNamespaceMissing)).toHaveLength(6)
+    // The directory's own claim keeps the entry point: a namespace that never
+    // arrived must not also take away the one action the page has left.
+    const add = screen.getByRole('button', { name: en.add }) as HTMLButtonElement
+    expect(add.disabled).toBe(true)
+  })
+
+  it('names the entries whose settings path holds no value yet', async () => {
+    await mountFace(scriptedFace({
+      namespaces: namespacesWithout('llm-deepseek', 'llm-plain').map(view => view.ns === 'llm-pi-ai'
+        ? { ...view, value: { providers: {} }, user: { providers: {} } }
+        : view),
+    }))
+    expect(screen.getByText(en.emptyDirectory)).toBeTruthy()
+    expect(screen.getByText(`${en.directoryEntries}: 6 · ${en.skippedEntries}: 6`)).toBeTruthy()
+    expect(screen.getAllByText(en.skipNamespaceMissing)).toHaveLength(2)
+    expect(screen.getAllByText(en.skipSettingsPathMissing)).toHaveLength(4)
+  })
+
+  it('states the empty page when the directory itself declares nothing', async () => {
+    await mountFace(scriptedFace({ directory: [], providers: [] }))
+    expect(screen.getByText(en.emptyDirectory)).toBeTruthy()
+    expect(screen.getByText(`${en.directoryEntries}: 0 · ${en.skippedEntries}: 0`)).toBeTruthy()
+    expect(screen.queryByText(`${en.skipDetails} (0)`)).toBeNull()
+  })
+
+  it('shows no empty-page copy while the snapshot is still loading', async () => {
+    const scripted = scriptedFace({ directory: [], providers: [] })
+    const ctx = ctxWith(scripted.face)
+    const controller = new ModelsSettingsStore(ctx, settingsSchema, new SettingsDescribeMirror(ctx))
+    const loading = controller.load()
+    render(<ModelsSection
+      controller={controller}
+      useSnapshot={bindSnapshotSelector(controller.store)}
+      operations={operationsWith(scripted.face)}
+      schema={settingsSchema}
+      t={t}
+      renderSlot={stubRenderSlot() as unknown as ModelsSectionProps['renderSlot']}
+    />)
+    expect(screen.queryByText(en.emptyDirectory)).toBeNull()
+    await act(async () => { await loading })
+    expect(screen.getByText(en.emptyDirectory)).toBeTruthy()
+  })
 })

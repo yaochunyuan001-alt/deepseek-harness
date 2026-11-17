@@ -175,6 +175,12 @@ export const en = {
   onboardingSave: 'Save and continue',
   onboardingSaving: 'Saving…',
   keyRequired: 'Enter an API key to continue.',
+  emptyDirectory: 'The provider directory answered, but none of its entries can be edited on this page.',
+  directoryEntries: 'Entries',
+  skippedEntries: 'Skipped',
+  skipDetails: 'Skipped entries',
+  skipNamespaceMissing: 'settings namespace not mounted',
+  skipSettingsPathMissing: 'settings entry has no value yet',
 }
 
 /** The settings.models namespace key union. */
@@ -355,6 +361,12 @@ export const zh: { [Key in keyof typeof en]: string } = {
   onboardingSave: '保存并继续',
   onboardingSaving: '保存中…',
   keyRequired: '请输入 API 密钥后继续。',
+  emptyDirectory: '服务商目录已返回，但其中没有能在这个页面编辑的条目。',
+  directoryEntries: '条目',
+  skippedEntries: '已跳过',
+  skipDetails: '被跳过的条目',
+  skipNamespaceMissing: '设置命名空间未挂载',
+  skipSettingsPathMissing: '设置项尚无值',
 }
 
 /** Japanese copy, checked against the English keys. */
@@ -532,6 +544,12 @@ export const ja = {
   'onboardingSave': '保存して続ける',
   'onboardingSaving': '保存中…',
   'keyRequired': '続けるにはAPIキーを入力してください。',
+  'emptyDirectory': 'プロバイダーディレクトリは応答しましたが、このページで編集できる項目はありません。',
+  'directoryEntries': '項目',
+  'skippedEntries': 'スキップ',
+  'skipDetails': 'スキップされた項目',
+  'skipNamespaceMissing': '設定名前空間がマウントされていません',
+  'skipSettingsPathMissing': '設定項目にまだ値がありません',
 } satisfies Record<keyof typeof en, string>
 
 /** Spanish dictionary, checked against the English keys. */
@@ -709,6 +727,12 @@ export const es = {
   onboardingSave: 'Guardar y continuar',
   onboardingSaving: 'Guardando…',
   keyRequired: 'Ingrese una clave API para continuar.',
+  emptyDirectory: 'El directorio de proveedores respondió, pero ninguna de sus entradas se puede editar en esta página.',
+  directoryEntries: 'Entradas',
+  skippedEntries: 'Omitidas',
+  skipDetails: 'Entradas omitidas',
+  skipNamespaceMissing: 'el espacio de nombres de configuración no está montado',
+  skipSettingsPathMissing: 'la entrada de configuración aún no tiene valor',
 } satisfies Record<keyof typeof en, string>
 
 /** French dictionary, checked against the English keys. */
@@ -886,6 +910,12 @@ export const fr = {
   onboardingSave: 'Enregistrer et continuer',
   onboardingSaving: 'Sauvegarde…',
   keyRequired: 'Entrez une clé API pour continuer.',
+  emptyDirectory: 'Le répertoire des fournisseurs a répondu, mais aucune de ses entrées ne peut être modifiée sur cette page.',
+  directoryEntries: 'Entrées',
+  skippedEntries: 'Ignorées',
+  skipDetails: 'Entrées ignorées',
+  skipNamespaceMissing: 'l’espace de noms de configuration n’est pas monté',
+  skipSettingsPathMissing: 'l’entrée de configuration n’a pas encore de valeur',
 } satisfies Record<keyof typeof en, string>
 
 /** German dictionary, checked against the English keys. */
@@ -1063,6 +1093,12 @@ export const de = {
   onboardingSave: 'Speichern und fortfahren',
   onboardingSaving: 'Speichern…',
   keyRequired: 'Geben Sie einen API-Schlüssel ein, um fortzufahren.',
+  emptyDirectory: 'Das Anbieterverzeichnis hat geantwortet, aber keiner seiner Einträge lässt sich auf dieser Seite bearbeiten.',
+  directoryEntries: 'Einträge',
+  skippedEntries: 'Übersprungen',
+  skipDetails: 'Übersprungene Einträge',
+  skipNamespaceMissing: 'der Einstellungs-Namensraum ist nicht eingebunden',
+  skipSettingsPathMissing: 'der Einstellungseintrag hat noch keinen Wert',
 } satisfies Record<keyof typeof en, string>
 
 /** Russian dictionary, checked against the English keys. */
@@ -1240,6 +1276,12 @@ export const ru = {
   onboardingSave: 'Сохранить и продолжить',
   onboardingSaving: 'Сохранение…',
   keyRequired: 'Введите ключ API, чтобы продолжить.',
+  emptyDirectory: 'Каталог поставщиков ответил, но ни одну из его записей нельзя изменить на этой странице.',
+  directoryEntries: 'Записи',
+  skippedEntries: 'Пропущено',
+  skipDetails: 'Пропущенные записи',
+  skipNamespaceMissing: 'пространство имён настроек не подключено',
+  skipSettingsPathMissing: 'у записи настроек ещё нет значения',
 } satisfies Record<keyof typeof en, string>
 
 /** Portuguese dictionary, checked against the English keys. */
@@ -1417,4 +1459,10 @@ export const pt = {
   onboardingSave: 'Salvar e continuar',
   onboardingSaving: 'Salvando…',
   keyRequired: 'Insira uma chave de API para continuar.',
+  emptyDirectory: 'O diretório de provedores respondeu, mas nenhuma de suas entradas pode ser editada nesta página.',
+  directoryEntries: 'Entradas',
+  skippedEntries: 'Ignoradas',
+  skipDetails: 'Entradas ignoradas',
+  skipNamespaceMissing: 'o namespace de configurações não está montado',
+  skipSettingsPathMissing: 'a entrada de configurações ainda não tem valor',
 } satisfies Record<keyof typeof en, string>
